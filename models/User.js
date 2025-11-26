@@ -8,12 +8,13 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   otp: String,
   otpExpire: Date,
+  role: { type: String, enum: ["user", "admin"], default: "user" },
   credits: { type: Number, default: 0 },
   transactions: [
     {
       type: {
         type: String,
-        enum: ["topup", "referral", "subscription", "deduction"],
+        enum: ["topup", "referral", "subscription", "deduction","debit"],
         default: "topup",
       },
       amount: Number,

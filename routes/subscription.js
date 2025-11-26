@@ -4,7 +4,6 @@ const jwt = require("jsonwebtoken");
 const Subscription = require("../models/Subscription");
 const User = require("../models/User");
 
-
 const router = express.Router();
 
 // Middleware to verify JWT
@@ -61,14 +60,18 @@ router.post("/add", authMiddleware, async (req, res) => {
       subscription,
     });
   } catch (error) {
-    res.status(500).json({ message: "Failed to add subscription", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to add subscription", error: error.message });
   }
 });
 
 // ✅ Get All User Subscriptions
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const subscriptions = await Subscription.find({ userId: req.userId }).sort({ startDate: -1 });
+    const subscriptions = await Subscription.find({ userId: req.userId }).sort({
+      startDate: -1,
+    });
     res.json(subscriptions);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch subscriptions", error });
@@ -85,7 +88,9 @@ router.get("/active", authMiddleware, async (req, res) => {
     });
     res.json(subscriptions);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch active subscriptions", error });
+    res
+      .status(500)
+      .json({ message: "Failed to fetch active subscriptions", error });
   }
 });
 

@@ -20,14 +20,15 @@ const authMiddleware = (req, res, next) => {
 };
 
 // ✅ Add Top-up
+// ✅ Updated Top-up
 router.post("/topup", authMiddleware, async (req, res) => {
   try {
-    console.log("req.body", req.body);
-    const { amount } = req.body;
+    const { amount, userId } = req.body;
+    if (!userId) return res.status(400).json({ message: "User ID required" });
     if (!amount || amount <= 0)
       return res.status(400).json({ message: "Invalid amount" });
 
-    const user = await User.findById(req.userId);
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.credits += amount;
@@ -45,17 +46,19 @@ router.post("/topup", authMiddleware, async (req, res) => {
       transactions: user.transactions,
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Top-up failed", error });
   }
 });
 
-// ✅ Add Referral Bonus
+// ✅ Updated Referral Bonus
 router.post("/referral", authMiddleware, async (req, res) => {
   try {
-    const { bonusAmount } = req.body;
-    const amount = bonusAmount || 200; // default ₹200 referral bonus
+    const { bonusAmount, userId } = req.body;
+    if (!userId) return res.status(400).json({ message: "User ID required" });
+    const amount = bonusAmount || 200;
 
-    const user = await User.findById(req.userId);
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.credits += amount;
@@ -73,9 +76,11 @@ router.post("/referral", authMiddleware, async (req, res) => {
       transactions: user.transactions,
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Failed to add referral bonus", error });
   }
 });
+
 
 // ✅ Get User Credits & Transactions
 router.get("/", authMiddleware, async (req, res) => {
@@ -91,5 +96,47 @@ router.get("/", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Failed to fetch credits", error });
   }
 });
+
+router.post("/deduct", authMiddleware, async (req, res) => {
+  try {
+    const { amount, userId, description } = req.body;
+    if (!userId) return res.status(400).json({ message: "User ID required" });
+    if (!amount || amount <= 0)
+      return res.status(400).json({ message: "Invalid amount" });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Check for sufficient balance
+    if (user.credits < amount) {
+      return res.status(400).json({ message: "Insufficient credits" });
+    }
+
+    // Deduct credits
+    user.credits -= amount;
+    user.transactions.push({
+      type: "debit",
+      amount,
+      description: description || `Debit of ₹${amount}`,
+    });
+
+    await user.save();
+
+    res.json({
+      message: "Credits deducted successfully",
+      remainingCredits: user.credits,
+      lastTransaction: {
+        type: "debit",
+        amount,
+        description: description || `Debit of ₹${amount}`,
+      },
+      transactions: user.transactions,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to deduct credits", error });
+  }
+});
+
 
 module.exports = router;

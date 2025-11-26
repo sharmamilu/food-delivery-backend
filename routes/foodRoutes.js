@@ -57,6 +57,24 @@ router.get("/", async (req, res) => {
   }
 });
 
+/// DELETE - Remove food item
+router.delete("/:id", async (req, res) => {
+  try {
+    const deleted = await Food.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Food not found" });
+    }
+    res.json({ success: true, message: "Food item deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting food item:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Error deleting food item" });
+  }
+});
+
 // ✅ GET - Fetch single food item by ID
 router.get("/:id", async (req, res) => {
   try {

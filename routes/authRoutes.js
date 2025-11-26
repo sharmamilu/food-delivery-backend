@@ -32,9 +32,12 @@ router.post("/forgot-password", async (req, res) => {
 
 router.post("/request-otp", async (req, res) => {
   const { contact } = req.body; // can be phone or email
-  if (!contact) return res.status(400).json({ message: "Phone or email required" });
+  if (!contact)
+    return res.status(400).json({ message: "Phone or email required" });
 
-  const user = await User.findOne({ $or: [{ email: contact }, { phone: contact }] });
+  const user = await User.findOne({
+    $or: [{ email: contact }, { phone: contact }],
+  });
   if (!user) return res.status(404).json({ message: "User not found" });
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit
@@ -67,7 +70,6 @@ router.post("/verify-otp", async (req, res) => {
   res.json({ message: "Password reset successful!" });
 });
 
-
 // Step 2: Reset Password
 router.post("/reset-password", async (req, res) => {
   const { email, token, newPassword } = req.body;
@@ -94,4 +96,7 @@ router.get("/me", authMiddleware, (req, res) => {
   res.json({ message: "Welcome to your profile", userId: req.user.id });
 });
 
+router.get("/verify-token", authMiddleware, (req, res) => {
+  res.json({ valid: true, userId: req.user.id });
+});
 module.exports = router;
