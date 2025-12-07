@@ -9,7 +9,9 @@ connectDB();
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+// app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Add limit: '10mb'
+app.use(express.urlencoded({ limit: '10mb', extended: true })); // Also add for URL encoded
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/credits", require("./routes/credit"));

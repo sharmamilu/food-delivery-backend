@@ -207,10 +207,154 @@ const verifyPayment = async (req, res) => {
   }
 };
 
+// Get all orders (for admin)
+const getAllOrders = async (req, res) => {
+  try {
+    const { status, page = 1, limit = 20 } = req.query;
+    
+    let query = {};
+    
+    // Filter by status if provided
+    if (status) {
+      query.status = status;
+    }
+    
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+    
+    // Get orders with pagination
+    const orders = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+    
+    // Get total count for pagination
+    const total = await Order.countDocuments(query);
+    const totalPages = Math.ceil(total / limitNum);
+    
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      total,
+      page: pageNum,
+      totalPages,
+      orders,
+    });
+  } catch (error) {
+    console.error('Get all orders error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get orders',
+      error: error.message,
+    });
+  }
+};
+
+// Get orders with pending verification
+const getPendingVerificationOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ 
+      status: 'payment_received',
+      isVerified: false 
+    }).sort({ paymentSubmittedAt: -1 });
+    
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      orders,
+    });
+  } catch (error) {
+    console.error('Get pending verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get pending verification orders',
+      error: error.message,
+    });
+  }
+};
+
+// Update order status (for admin)
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status, isVerified } = req.body;
+    
+    const order = await Order.findOne({ orderId });
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+      });
+    }
+    
+    // Update fields if provided
+    if (status) {
+      order.status = status;
+    }
+    
+    if (isVerified !== undefined) {
+      order.isVerified = isVerified;
+      
+      // If verifying payment, update status accordingly
+      if (isVerified && order.status === 'payment_received') {
+        order.status = 'payment_verified';
+      }
+    }
+    
+    await order.save();
+    
+    res.status(200).json({
+      success: true,
+      message: 'Order updated successfully',
+      order,
+    });
+  } catch (error) {
+    console.error('Update order status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update order status',
+      error: error.message,
+    });
+  }
+};
+
+const getUserOrderById = async (req, res) => {
+  try {
+    const { userId, orderId } = req.params; // Get from URL params, not query
+    
+    const order = await Order.findOne({ orderId, userId });
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    console.error('Get user order by ID error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get user order by ID',
+      error: error.message,
+    });
+  }
+}
+// Add at the end of exports:
 module.exports = {
   createOrder,
   submitPaymentProof,
   getOrderById,
   getUserOrders,
   verifyPayment,
+  getAllOrders,
+  getUserOrderById,
+  getPendingVerificationOrders,
+  updateOrderStatus,
 };
