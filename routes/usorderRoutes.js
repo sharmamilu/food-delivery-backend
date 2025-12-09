@@ -9,7 +9,8 @@ const {
   getAllOrders,
   getPendingVerificationOrders,
   updateOrderStatus,
-  getUserOrderById
+  getUserOrderById,
+  getVerifiedOrders
 } = require('../controllers/usorderController');
 
 // Create new order
@@ -32,4 +33,5 @@ router.get('/admin/pending', getPendingVerificationOrders);
 router.put('/admin/:orderId/update-status', updateOrderStatus);
 router.put('/:orderId/verify-payment',verifyPayment);
   router.get('/user/:userId/:orderId', getUserOrderById); 
+  router.get('/admin/verified', getVerifiedOrders);
 module.exports = router;

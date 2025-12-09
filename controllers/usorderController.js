@@ -1,4 +1,5 @@
 const Order = require('../models/Usorder');
+const User = require('../models/User'); // Make sure to import User model
 const { uploadToCloudinary } = require('../middleware/uploadMiddleware');
 
 // Create new order
@@ -19,6 +20,22 @@ const createOrder = async (req, res) => {
       pincode,
     } = req.body;
 
+    // Fetch user details
+    let userDetails = null;
+    try {
+      const user = await User.findById(userId).select('name email contact');
+      if (user) {
+        userDetails = {
+          name: user.name || 'Unknown User',
+          email: user.email || 'No email',
+          contact: user.contact || 'No phone',
+        };
+      }
+    } catch (userError) {
+      console.error('Error fetching user details:', userError);
+      // Continue without user details if there's an error
+    }
+
     const newOrder = new Order({
       orderId,
       userId,
@@ -33,6 +50,7 @@ const createOrder = async (req, res) => {
       deliveryType,
       pincode,
       status: 'pending_payment',
+      userDetails: userDetails // Add user details to the order
     });
 
     await newOrder.save();
@@ -210,7 +228,7 @@ const verifyPayment = async (req, res) => {
 // Get all orders (for admin)
 const getAllOrders = async (req, res) => {
   try {
-    const { status, page = 1, limit = 20 } = req.query;
+    const { status, page = 1, limit = 100 } = req.query;
     
     let query = {};
     
@@ -346,6 +364,26 @@ const getUserOrderById = async (req, res) => {
     });
   }
 }
+const getVerifiedOrders = async (req, res) => {
+   try {
+    const orders = await Order.find({
+      isVerified: true,
+      status: { $in: ['preparing', 'out_for_delivery', 'delivered'] }
+    })
+    .sort({ updatedAt: -1 });
+
+    res.json({
+      success: true,
+      orders: orders
+    });
+  } catch (error) {
+    console.error('Get verified orders error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch verified orders'
+    });
+  }
+}
 // Add at the end of exports:
 module.exports = {
   createOrder,
@@ -357,4 +395,5 @@ module.exports = {
   getUserOrderById,
   getPendingVerificationOrders,
   updateOrderStatus,
+  getVerifiedOrders
 };

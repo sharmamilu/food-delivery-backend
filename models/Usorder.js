@@ -40,6 +40,22 @@ const addressSchema = new mongoose.Schema({
   },
 });
 
+// User details schema to be embedded in order
+const userDetailsSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: false
+  },
+  email: {
+    type: String,
+    required: false
+  },
+  contact: {
+    type: String,
+    required: false
+  }
+});
+
 const usorderSchema = new mongoose.Schema(
   {
     orderId: {
@@ -51,6 +67,8 @@ const usorderSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // Add userDetails field here
+    userDetails: userDetailsSchema,
     items: [orderItemSchema],
     subtotal: {
       type: Number,
