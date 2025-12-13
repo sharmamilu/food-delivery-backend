@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const Food = require("../models/Food");
-
+const adminauthMiddleware = require("../middleware/adminauthMiddleware");
 // ✅ POST - Add new food item
-router.post("/add", async (req, res) => {
+router.post("/add", adminauthMiddleware, async (req, res) => {
   try {
     const { name, description, price, image } = req.body;
 
@@ -58,7 +58,7 @@ router.get("/", async (req, res) => {
 });
 
 /// DELETE - Remove food item
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", adminauthMiddleware, async (req, res) => {
   try {
     const deleted = await Food.findByIdAndDelete(req.params.id);
     if (!deleted) {

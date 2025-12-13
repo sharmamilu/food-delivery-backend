@@ -15,13 +15,14 @@ app.use(express.urlencoded({ limit: '10mb', extended: true })); // Also add for 
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/credits", require("./routes/credit"));
-app.use("/api/subscription", require("./routes/subscription"));
 app.use("/api/transactions", require("./routes/transactionRoutes"));
 app.use("/api/food", require("./routes/foodRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/user", require("./routes/user"));
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/usorder", require("./routes/usorderRoutes"));
+app.use("/api/subscription", require("./routes/subscriptionRoutes"));
+app.use("/api/subscriptionorders", require("./routes/subscriptionOrderRoutes"));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
