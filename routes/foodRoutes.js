@@ -2,37 +2,62 @@ const express = require("express");
 const router = express.Router();
 const Food = require("../models/Food");
 const adminauthMiddleware = require("../middleware/adminauthMiddleware");
+const { uploadToCloudinary } = require("../middleware/uploadMiddleware");
 // ✅ POST - Add new food item
 router.post("/add", adminauthMiddleware, async (req, res) => {
   try {
-    const { name, description, price, image } = req.body;
+    const { name, description, price, image,type } = req.body;
 
-    if (!name || !price) {
+    // Validate required fields
+    if (!name || !description || !price) {
       return res.status(400).json({
         success: false,
-        message: "Name and price are required.",
+        message: "Please provide all required fields",
       });
     }
 
+    let cloudinaryUrl = null;
+
+    // If image is provided as base64, upload to Cloudinary
+    if (image && image.startsWith("data:image")) {
+      try {
+        const uploadResult = await uploadToCloudinary(image);
+        cloudinaryUrl = uploadResult.url;
+      } catch (uploadError) {
+        console.error("Cloudinary upload error:", uploadError);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to upload image to server",
+        });
+      }
+    } else if (image) {
+      // If it's already a URL (for backward compatibility)
+      cloudinaryUrl = image;
+    }
+
+    // Create new food item
     const newFood = new Food({
       name,
       description,
-      price,
-      image,
+      price: parseFloat(price),
+      image: cloudinaryUrl,
+      type: type, // You might want to add this as a field in your form
+      category: "main", // You might want to add this as a field in your form
+      isAvailable: true,
     });
 
     await newFood.save();
 
-    res.json({
+    res.status(201).json({
       success: true,
       message: "Food item added successfully",
-      data: newFood,
+      food: newFood,
     });
   } catch (error) {
-    console.error("Error adding food item:", error);
+    console.error("Add food error:", error);
     res.status(500).json({
       success: false,
-      message: "Error adding food item",
+      message: "Failed to add food item",
       error: error.message,
     });
   }
